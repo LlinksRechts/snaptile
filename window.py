@@ -1,6 +1,6 @@
 from gi.repository import Gdk
 
-def position(startpos, endpos):
+def position(startpos, endpos, dualMonitor):
     window, screen = active_window()
     window.unmaximize()
     window.set_shadow_width(0, 0, 0, 0)
@@ -19,7 +19,10 @@ def position(startpos, endpos):
     )
 
 
-    multiscreen_offset = get_multi_screen_offset(screen, window)
+    if dualMonitor:
+        multiscreen_offset = 0
+    else:
+        multiscreen_offset = get_multi_screen_offset(screen, window)
 
     window.move_resize(
         pos[1] * w + multiscreen_offset,

@@ -97,7 +97,7 @@ def global_inital_states():
         get_posmap(keymap, displ)
     )
 
-global disp, root, lastkey_state, posmap;
+global disp, root, lastkey_state, posmap, isDualMonitor;
 
 
 def run():
@@ -105,6 +105,9 @@ def run():
 
     opts, args = getopt.getopt(sys.argv[1:], "hdWk:")
     keyboardLayout = autodetectKeyboard()
+
+    global isDualMonitor
+
     isDualMonitor = False
     
     for opt in opts:
@@ -175,7 +178,8 @@ def checkevt(_, __, handle=None):
 def handleevt(startkey, endkey):
     position(
         posmap[startkey],
-        posmap[endkey]
+        posmap[endkey],
+        isDualMonitor,
     )
 
 if __name__ == '__main__':
