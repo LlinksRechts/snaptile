@@ -5,6 +5,7 @@ def position(startpos, endpos, dualMonitor):
     window.unmaximize()
     window.set_shadow_width(0, 0, 0, 0)
     workarea = screen.get_monitor_workarea(screen.get_monitor_at_window(window))
+    display = Gdk.Display.get_default()
 
     offx, offy = offsets(window)
     w, h = (workarea.width / 4, workarea.height / 3)
@@ -24,11 +25,19 @@ def position(startpos, endpos, dualMonitor):
     else:
         multiscreen_offset = get_multi_screen_offset(screen, window)
 
+    if dualMonitor:
+        screen_y_offset = [
+            monitor_y_offset(display, min(startpos, endpos, key=lambda x: x[0]*10 + x[1])[1]),
+            monitor_y_offset(display, max(startpos, endpos, key=lambda x: x[0]*10 + x[1])[1]),
+        ]
+    else:
+        screen_y_offset = [0, 0]
+
     window.move_resize(
         pos[1] * w + multiscreen_offset,
-        pos[0] * h,
+        pos[0] * h + screen_y_offset[0],
         w * dims[1] - (offx * 2),
-        h * dims[0]- (offx + offy)
+        h * dims[0]- (offx + offy) + screen_y_offset[1] - screen_y_offset[0]
     )
 
 def active_window():
@@ -61,3 +70,11 @@ def no_window(screen, window):
         ) or
         window.get_type_hint().value_name == 'GDK_WINDOW_TYPE_HINT_DESKTOP'
     )
+
+
+def monitor_y_offset(display, x):
+    left_monitor = display.get_monitor_at_point(0, 0)
+    right_monitor = display.get_monitor(1) \
+                    if left_monitor == display.get_monitor(0) \
+                       else display.get_monitor(0)
+    return [left_monitor, right_monitor][x // 4].get_workarea().y
