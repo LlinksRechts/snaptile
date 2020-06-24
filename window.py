@@ -2,6 +2,8 @@ from gi.repository import Gdk
 
 def position(startpos, endpos, dualMonitor):
     window, screen = active_window()
+    if window is None:
+        return
     window.unmaximize()
     window.set_shadow_width(0, 0, 0, 0)
     workarea = screen.get_monitor_workarea(screen.get_monitor_at_window(window))
@@ -45,7 +47,7 @@ def active_window():
     window = screen.get_active_window()
 
     if no_window(screen, window):
-        return None
+        return None, None
 
     return (window, screen)
 
