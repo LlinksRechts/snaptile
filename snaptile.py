@@ -10,8 +10,10 @@ from Xlib import display, X
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib
-from window import position
+from window import position, fill
 from keyutil import get_posmap, initkeys
+
+import time
 
 keymaps = {
     "qwerty":
@@ -59,6 +61,9 @@ dualMonitorKeymaps = {
      ['semicolon', 'Q', 'J', 'K', 'X', 'B', 'M', 'W']),
 }
 
+# delay for double presses
+fill_delay = 0.5
+
 
 
 def autodetectKeyboard():
@@ -97,19 +102,21 @@ def global_inital_states():
         get_posmap(keymap, displ)
     )
 
-global disp, root, lastkey_state, posmap, isDualMonitor;
+global disp, root, lastkey_state, posmap, isDualMonitor, fillEnabled;
 
 
 def run():
     mask = None
 
-    opts, args = getopt.getopt(sys.argv[1:], "hdWk:")
+    opts, args = getopt.getopt(sys.argv[1:], "hdWk:f")
     keyboardLayout = autodetectKeyboard()
 
-    global isDualMonitor
+    global isDualMonitor, fillEnabled
 
     isDualMonitor = False
 
+    fillEnabled = False
+    
     for opt in opts:
         if opt[0] == '-h':
             print ('Snaptile.py')
@@ -117,6 +124,7 @@ def run():
             print ('-W use Windows key')
             print ('-h this help text')
             print ('-k <keymap> to specify a keyboard layout (eg. qwerty)')
+            print ('-f enable filling available space on double press')
             sys.exit()
         elif opt[0] == '-d':
             isDualMonitor = True
@@ -124,6 +132,8 @@ def run():
             mask = 'Windows'
         elif opt[0] == '-k':
             keyboardLayout = opt[1]
+        elif opt[0] == '-f':
+            fillEnabled = True
 
     global keymap;
     keymapSource = keymaps
@@ -166,14 +176,20 @@ def checkevt(_, __, handle=None):
             root.grab_keyboard(1, X.GrabModeAsync, X.GrabModeAsync, X.CurrentTime)
 
             if not lastkey_state['pressed']:
-                handleevt(event.detail, event.detail)
+                if fillEnabled and \
+                   lastkey_state['code'] == event.detail and \
+                   time.time() - lastkey_state['time'] < fill_delay:
+                    handle_fill(event.detail)
+                else:
+                    handleevt(event.detail, event.detail)
 
             else:
                 handleevt(lastkey_state['code'], event.detail)
 
             lastkey_state = {
                 'code': event.detail,
-                'pressed': True
+                'pressed': True,
+                'time': time.time(),
             }
 
         if event.type == X.KeyRelease:
@@ -199,6 +215,9 @@ def handleevt(startkey, endkey):
         posmap[endkey],
         isDualMonitor,
     )
+
+def handle_fill(key):
+    fill(posmap[key], isDualMonitor)
 
 if __name__ == '__main__':
     run()

@@ -1,4 +1,5 @@
 from gi.repository import Gdk
+from itertools import product
 
 def position(startpos, endpos, dualMonitor):
     window, screen = active_window()
@@ -51,6 +52,85 @@ def position(startpos, endpos, dualMonitor):
     window.move_resize(
         *top_left,
         *dims,
+    )
+
+
+def fill(pos, dualMonitor):
+    screen = Gdk.Screen.get_default()
+    display = Gdk.Display.get_default()
+    window = screen.get_active_window()
+    if dualMonitor:
+        monitor = get_target_monitor(display, pos[1])
+    else:
+        monitor = display.get_monitor_at_window(window)
+    other_wins = [
+        win for win in screen.get_window_stack()
+        if win.get_desktop() == window.get_desktop()
+        and win != window
+    ]
+    win_geometries = [win.get_frame_extents() for win in other_wins]
+    initial = grid_to_xywh(pos, monitor)
+    # filter out windows which overlap no matter what
+    win_geometries = [win for win in win_geometries if not overlaps(initial, geom_to_tuple(win))]
+    max_tiles = 0
+    best_pos = ()
+    # try all possibilities and choose the one with the most tiles
+    # at least one is valid (the single tile), since we filter out windows
+    # which conflict this tile above
+    for ylow, yhigh, xlow, xhigh in product(
+            range(0, pos[0] + 1),
+            range(pos[0], 3),
+            range(0, (pos[1] % 4) + 1),
+            range((pos[1] % 4), 4),
+    ):
+        tiles = (xhigh-xlow+1) * (yhigh-ylow+1)
+        if tiles < max_tiles:
+            continue
+        top_left = (ylow, xlow)
+        bot_right = (yhigh, xhigh)
+        abs_top_left = grid_to_coords(top_left, monitor)[:2]
+        abs_bot_right = grid_to_coords(bot_right, monitor)[2:]
+        abs_pos = (
+            *abs_top_left,
+            abs_bot_right[0] - abs_top_left[0],
+            abs_bot_right[1] - abs_top_left[1],
+        )
+        if not any(overlaps(abs_pos, geom_to_tuple(geom)) for geom in win_geometries):
+            max_tiles = tiles
+            best_pos = abs_pos
+
+    window.unmaximize()
+    window.set_shadow_width(0, 0, 0, 0)
+    window.move_resize(*best_pos)
+
+
+def grid_to_coords(pos, monitor):
+    geom = monitor.get_geometry()
+    x = geom.x + (pos[1] % 4) * geom.width // 4
+    y = geom.y + (pos[0] % 3) * geom.height // 3
+    return (x, y, x + geom.width // 4, y + geom.height // 3)
+
+
+def grid_to_xywh(pos, monitor):
+    coords = grid_to_coords(pos, monitor)
+    return (
+        coords[0],
+        coords[1],
+        coords[2] - coords[0],
+        coords[3] - coords[1],
+    )
+
+
+def geom_to_tuple(geom):
+    return (geom.x, geom.y, geom.width, geom.height)
+
+
+def overlaps(geom1, geom2):
+    return not (
+        geom1[0] >= geom2[0] + geom2[2] or
+        geom1[0] + geom1[2] <= geom2[0] or
+        geom1[1] >= geom2[1] + geom2[3] or
+        geom1[1] + geom1[3] <= geom2[1]
     )
 
 
