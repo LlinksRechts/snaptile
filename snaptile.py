@@ -144,6 +144,7 @@ def run():
     GObject.io_add_watch(root.display, GObject.IO_IN, checkevt)
     print('Snaptile running. Press CTRL+C to quit.')
     signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
     Gtk.main()
 
 def checkevt(_, __, handle=None):
