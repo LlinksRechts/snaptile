@@ -104,6 +104,7 @@ def fill(pos, dualMonitor):
     window.move_resize(*best_pos)
 
 
+# TODO move to geom_utils
 def grid_to_coords(pos, monitor):
     geom = monitor.get_geometry()
     x = geom.x + (pos[1] % 4) * geom.width // 4

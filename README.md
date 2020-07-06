@@ -16,6 +16,13 @@ The grid system divides your screen into 12 sections
 | <kbd>A</kbd>| <kbd>S</kbd>| <kbd>D</kbd>| <kbd>F</kbd>|
 | <kbd>Z</kbd>| <kbd>X</kbd>| <kbd>C</kbd>| <kbd>V</kbd>|
 
+or, in dual screen mode (`-d` switch), into 12 sections each, with extended keybindings for the second screen:
+
+| <kbd>T</kbd>| <kbd>Y</kbd>| <kbd>U</kbd>| <kbd>I</kbd>|
+|--|--|--|--|
+| <kbd>G</kbd>| <kbd>H</kbd>| <kbd>J</kbd>| <kbd>K</kbd>|
+| <kbd>B</kbd>| <kbd>N</kbd>| <kbd>M</kbd>| <kbd>,</kbd>|
+
 You can snap your window to any rectangle, of any arbitrary size, on this grid by specifying 2 corners. For example:
 
 <kbd>ctl</kbd> + <kbd>alt</kbd> + <kbd>E</kbd> + <kbd>D</kbd>
@@ -42,6 +49,14 @@ The two keys only needs to "span" a rectangle. For example:
 which looks like
 
 ![screenshot from 2017-06-07 22-55-56](https://user-images.githubusercontent.com/5866348/26910417-b381baca-4bd4-11e7-9ff7-fff9262743e8.png)
+
+### Fill
+With the `-f` switch, filling is activated. On double press of any of the shortcuts, snaptile will try to find as many sections
+around the specified one as possible without intersecting with other windows, and fill the largest match. This will still align to the 4x3 grid.
+Windows which obstruct the initial section are excluded from intersection, so they might be partially or even completely occluded.
+
+For example, if there is a window between tiles <kbd>Q</kbd> and <kbd>S</kbd>, double pressing <kbd>ctl</kbd> + <kbd>alt</kbd> + <kbd>X</kbd>
+will have the same outcome as <kbd>Z</kbd> and <kbd>V</kbd>. Double <kbd>C</kbd>, on the other hand, will result in <kbd>E</kbd> and <kbd>V</kbd>.
 
 
 ## Requirements
