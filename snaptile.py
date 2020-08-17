@@ -97,7 +97,8 @@ def global_inital_states():
         rt,
         {
             'code': 0,
-            'pressed': False
+            'pressed': False,
+            'window': None,
         },
         get_posmap(keymap, displ)
     )
@@ -116,7 +117,7 @@ def run():
     isDualMonitor = False
 
     fillEnabled = False
-    
+
     for opt in opts:
         if opt[0] == '-h':
             print ('Snaptile.py')
@@ -175,21 +176,30 @@ def checkevt(_, __, handle=None):
             # prevent loosing double press release events
             root.grab_keyboard(1, X.GrabModeAsync, X.GrabModeAsync, X.CurrentTime)
 
+            win = None
             if not lastkey_state['pressed']:
                 if fillEnabled and \
                    lastkey_state['code'] == event.detail and \
                    time.time() - lastkey_state['time'] < fill_delay:
-                    handle_fill(event.detail)
+                    win = handle_fill(
+                        event.detail,
+                        lastkey_state['window'],
+                    )
                 else:
-                    handleevt(event.detail, event.detail)
+                    win = handleevt(event.detail, event.detail)
 
             else:
-                handleevt(lastkey_state['code'], event.detail)
+                win = handleevt(
+                    lastkey_state['code'],
+                    event.detail,
+                    lastkey_state['window'],
+                )
 
             lastkey_state = {
                 'code': event.detail,
                 'pressed': True,
                 'time': time.time(),
+                'window': win,
             }
 
         if event.type == X.KeyRelease:
@@ -209,15 +219,16 @@ def checkevt(_, __, handle=None):
 
     return True
 
-def handleevt(startkey, endkey):
-    position(
+def handleevt(startkey, endkey, window=None):
+    return position(
         posmap[startkey],
         posmap[endkey],
         isDualMonitor,
+        window,
     )
 
-def handle_fill(key):
-    fill(posmap[key], isDualMonitor)
+def handle_fill(key, window=None):
+    return fill(posmap[key], isDualMonitor, window)
 
 if __name__ == '__main__':
     run()

@@ -2,8 +2,11 @@ from gi.repository import Gdk
 from itertools import product
 from geom_utils import grid_to_coords, grid_to_xywh, geom_to_tuple, overlaps
 
-def position(startpos, endpos, dualMonitor):
-    window, screen = active_window()
+def position(startpos, endpos, dualMonitor, window=None):
+    if window is None:
+        window, screen = active_window()
+    else:
+        screen = Gdk.Screen.get_default()
     if window is None:
         return
     window.unmaximize()
@@ -54,12 +57,14 @@ def position(startpos, endpos, dualMonitor):
         *top_left,
         *dims,
     )
+    return window
 
 
-def fill(pos, dualMonitor):
+def fill(pos, dualMonitor, window=None):
     screen = Gdk.Screen.get_default()
     display = Gdk.Display.get_default()
-    window = screen.get_active_window()
+    if window is None:
+        window = screen.get_active_window()
     if dualMonitor:
         monitor = get_target_monitor(display, pos[1])
     else:
@@ -103,6 +108,7 @@ def fill(pos, dualMonitor):
     window.unmaximize()
     window.set_shadow_width(0, 0, 0, 0)
     window.move_resize(*best_pos)
+    return window
 
 
 def active_window():
