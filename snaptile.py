@@ -109,7 +109,7 @@ def run():
     global isDualMonitor
 
     isDualMonitor = False
-    
+
     for opt in opts:
         if opt[0] == '-h':
             print ('Snaptile.py')
@@ -147,17 +147,23 @@ def run():
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
     Gtk.main()
 
+# counter for how many keys are currently pressed to fix xlib 'bug'
+keys_pressed = 0
+
 def checkevt(_, __, handle=None):
-    global lastkey_state
+    global lastkey_state, keys_pressed
 
     handle = handle or root.display
     for _ in range(0, handle.pending_events()):
         event = handle.next_event()
 
         if event.type == X.KeyPress:
-
+            keys_pressed += 1
             if event.detail not in posmap:
                 break
+
+            # prevent loosing double press release events
+            root.grab_keyboard(1, X.GrabModeAsync, X.GrabModeAsync, X.CurrentTime)
 
             if not lastkey_state['pressed']:
                 handleevt(event.detail, event.detail)
@@ -171,6 +177,17 @@ def checkevt(_, __, handle=None):
             }
 
         if event.type == X.KeyRelease:
+            # prevent going under 0 since we get
+            # one last release event from the modifier key
+            keys_pressed = max(keys_pressed-1, 0)
+            if keys_pressed == 0:
+                # no more keys pressed, so ungrab keyboard
+                disp.flush()
+                disp.ungrab_keyboard(X.CurrentTime)
+            else:
+                # grab keyboard to avoid losing KeyRelease event
+                root.grab_keyboard(1, X.GrabModeAsync, X.GrabModeAsync, X.CurrentTime)
+
             if event.detail == lastkey_state['code']:
                 lastkey_state['pressed'] = False
 
