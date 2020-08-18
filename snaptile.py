@@ -9,7 +9,7 @@ from Xlib import display, X
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GObject
+from gi.repository import Gtk, GLib
 from window import position
 from keyutil import get_posmap, initkeys
 
@@ -141,7 +141,7 @@ def run():
     initkeys(keymap, disp, root, mask)
     for _ in range(0, root.display.pending_events()):
         root.display.next_event()
-    GObject.io_add_watch(root.display, GObject.IO_IN, checkevt)
+    GLib.io_add_watch(root.display, GLib.IO_IN, checkevt)
     print('Snaptile running. Press CTRL+C to quit.')
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
