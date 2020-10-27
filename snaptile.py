@@ -12,6 +12,7 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib
 from window import position, fill
 from keyutil import get_posmap, initkeys
+from pointer import pointer_position
 
 import time
 
@@ -103,20 +104,21 @@ def global_inital_states():
         get_posmap(keymap, displ)
     )
 
-global disp, root, lastkey_state, posmap, isDualMonitor, fillEnabled;
+global disp, root, lastkey_state, posmap, isDualMonitor, fillEnabled, mouseEnabled;
 
 
 def run():
     mask = None
 
-    opts, args = getopt.getopt(sys.argv[1:], "hdWk:f")
+    opts, args = getopt.getopt(sys.argv[1:], "hdWk:fm")
     keyboardLayout = autodetectKeyboard()
 
-    global isDualMonitor, fillEnabled
+    global isDualMonitor, fillEnabled, mouseEnabled
 
     isDualMonitor = False
 
     fillEnabled = False
+    mouseEnabled = False
 
     for opt in opts:
         if opt[0] == '-h':
@@ -126,6 +128,7 @@ def run():
             print ('-h this help text')
             print ('-k <keymap> to specify a keyboard layout (eg. qwerty)')
             print ('-f enable filling available space on double press')
+            print ('-m enable mouse move support')
             sys.exit()
         elif opt[0] == '-d':
             isDualMonitor = True
@@ -135,6 +138,8 @@ def run():
             keyboardLayout = opt[1]
         elif opt[0] == '-f':
             fillEnabled = True
+        elif opt[0] == '-m':
+            mouseEnabled = True
 
     global keymap;
     keymapSource = keymaps
@@ -150,6 +155,8 @@ def run():
     disp, root, lastkey_state, posmap = global_inital_states()
 
     initkeys(keymap, disp, root, mask)
+    if mouseEnabled:
+        initkeys(keymap, disp, root, 'mouse')
     for _ in range(0, root.display.pending_events()):
         root.display.next_event()
     GLib.io_add_watch(root.display, GLib.IO_IN, checkevt)
@@ -169,6 +176,9 @@ def checkevt(_, __, handle=None):
         event = handle.next_event()
 
         if event.type == X.KeyPress:
+            if mouseEnabled and event.state & X.Mod4Mask and event.state & X.ControlMask:
+                handle_pointer_event(event.detail)
+                continue
             keys_pressed += 1
             if event.detail not in posmap:
                 break
@@ -229,6 +239,12 @@ def handleevt(startkey, endkey, window=None):
 
 def handle_fill(key, window=None):
     return fill(posmap[key], isDualMonitor, window)
+
+def handle_pointer_event(key):
+    return pointer_position(
+        posmap[key],
+        isDualMonitor,
+    )
 
 if __name__ == '__main__':
     run()

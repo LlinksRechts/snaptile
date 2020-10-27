@@ -3,7 +3,6 @@ from functools import reduce
 from Xlib import X
 
 def get_posmap(keymap, disp):
-
     posmap = {}
     for i, row in enumerate(keymap):
         for j, key in enumerate(row):
@@ -12,7 +11,6 @@ def get_posmap(keymap, disp):
     return posmap
 
 def initkeys(keymap, disp, root, mask=None):
-
     return [
         initkey(
             keycode(key, disp),
@@ -22,7 +20,6 @@ def initkeys(keymap, disp, root, mask=None):
     ]
 
 def initkey(code, root, mask=None):
-
     if mask == 'Windows':
         root.grab_key(
             code,
@@ -30,6 +27,21 @@ def initkey(code, root, mask=None):
             1,
             X.GrabModeAsync,
             X.GrabModeAsync
+        )
+    elif mask == 'mouse':
+        root.grab_key(
+            code,
+            X.ControlMask | X.Mod1Mask | X.Mod4Mask,
+            1,
+            X.GrabModeAsync,
+            X.GrabModeAsync,
+        )
+        root.grab_key(
+            code,
+            X.ControlMask | X.Mod1Mask | X.Mod4Mask | X.Mod2Mask,
+            1,
+            X.GrabModeAsync,
+            X.GrabModeAsync,
         )
     else:
         root.grab_key(
